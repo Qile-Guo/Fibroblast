@@ -69,7 +69,7 @@ meta$OS.time.use=meta$OS.time
 do.cox = function(df, type, cancer){
   df$group = factor(df$group,levels = c('low','high'))
   if (length(unique(na.omit(df$group))) < 2) {
-    stop("分组变量必须包含至少两个有效水平")
+    stop("At least two groups should be included")
   }
   if (type == "reg") {
     formula = if (length(unique(df$gender)) > 1) {
@@ -85,7 +85,7 @@ do.cox = function(df, type, cancer){
   cox.summary = summary(cox)
   group_rows = grep("^group", rownames(cox.summary$conf.int))
   if (length(group_rows) == 0) {
-    stop("模型中未检测到分组变量的结果，请检查变量命名")
+    stop("error")
   }
   HR = round(cox.summary$conf.int[group_rows, 1], 2)
   HR.lower = round(cox.summary$conf.int[group_rows, 3], 2)
@@ -165,7 +165,6 @@ for (i in c("ADAM12")) {
     dir.create(ssdir, F, T)
     cdat3 = read.table(sprintf("%s/HR1/%s/HR.sepCan_%s.txt",dir,i,type), sep="\t", header=T, stringsAsFactors=F)
     cdat3 = cdat3[cdat3$cancerType!='panCan',]
-    cdat3 = cdat3[cdat3$cancerType %in% c("BRCA","ESCA","NSCLC","BLCA","STAD","HNSC","SKCM","RCC","CRC","LIHC","THCA","PAAD","MESO","CHOL"),]
     cdat3 = cdat3[order(cdat3[,3]),]
     meta = meta::metagen( TE=cdat3$coef, seTE=cdat3$coef.se, studlab=cdat3$cancerType,
                           comb.fixed=F, comb.random=T, prediction=F, sm="HR")
@@ -201,12 +200,12 @@ mat <- mat[, common_samples, drop = FALSE]
 meta <- meta[common_samples, , drop = FALSE]
 if (!is.numeric(mat)) {
   mat <- apply(mat, 2, as.numeric)
-  rownames(mat) <- rownames(mat)  # 保持行名
+  rownames(mat) <- rownames(mat)
 }
 # read infiltration data
 infil <- read.csv("infiltration_estimation_for_tcga.csv")
 rownames(infil) <- gsub("-", ".", infil$cell_type)
-infil$cell_type <- NULL  # 移除重复列
+infil$cell_type <- NULL =
 # align samples
 common_samples2 <- intersect(colnames(mat), rownames(infil))
 mat <- mat[, common_samples2, drop = FALSE]
@@ -247,7 +246,6 @@ data <- data[data$celltype %in% c("T.cell.CD8._CIBERSORT", "T.cell.CD8._EPIC"), 
 data$fdr <- p.adjust(data$p, method = "BH")
 data$cell <- sapply(strsplit(data$celltype, "_"), `[`, 1)
 data$pvalue <- ifelse(data$fdr < 0.05, "sig", "ns")
-selected_cancers <- c('BRCA', 'ESCA', 'NSCLC', 'BLCA', 'STAD', 'HNSC', 'SKCM', 'RCC', 'CRC', 'LIHC', 'THCA', 'PAAD', 'MESO', 'CHOL')
 ADAM12_CD8 <- data %>% filter(cancer %in% selected_cancers) %>% mutate(celltype = paste0("ADAM12_", celltype))
 # visualization
 p <- ggplot(ADAM12_CD8, aes(x = cancer, y = celltype, shape = pvalue, color = rho)) +
@@ -362,4 +360,5 @@ p2<-ggplot(data =data_l_mean_m2,aes(x=Change,y=Tumor.Regression.Ratio))+
 stat_cor(method = "pearson")
 
 p2
+
 
