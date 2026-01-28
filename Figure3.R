@@ -95,26 +95,7 @@ ggsave("PB_PC_cor_top_genes.pdf",width=8,height=5)
 
 
 ####################### ADAM12 isoform TPM
-base_dir <- "./CAF_bulk_kallisto" 
-sample_id <- list.dirs(base_dir, full.names = FALSE, recursive = FALSE)
-
-isoform_data <- map_df(sample_id, function(id) {
-  file_path <- file.path(base_dir, id, "abundance.tsv")
-  if(!file.exists(file_path)) return(NULL)
-  
-  read_tsv(file_path, comment = "#") %>%
-    filter(str_detect(target_id, "ADAM12")) %>%
-    mutate(sample = id)
-})
-
-# Annotate isoforms
-isoform_data <- isoform_data %>%
-  mutate(gene_label = case_when(
-    str_detect(target_id, "ADAM12-202|ADAM12-203") ~ "ADAM12-L",
-    str_detect(target_id, "ADAM12-201") ~ "ADAM12-S",
-    TRUE ~ "processed_transcript"
-  ))
-
+isoform_data <- read.csv("./isoform_data.csv")
 sample_info <- read.csv("./human_bulk_0313.csv") %>% rename(sample = 1)
 
 plot_data <- isoform_data %>%
@@ -122,8 +103,6 @@ plot_data <- isoform_data %>%
   filter(Condition == "CRC-0111-T", 
          gene_label %in% c("ADAM12-L", "ADAM12-S"),
          Treatment %in% c("DMSO", "TGFb1")) %>%
-  group_by(sample, Treatment, gene_label) %>%
-  summarize(tpm = sum(tpm), .groups = "drop") %>%
   mutate(log_tpm = log10(tpm + 1),
          gene_label = factor(gene_label, levels = c("ADAM12-S", "ADAM12-L")))
 
@@ -218,9 +197,10 @@ gsea_results
 p<-gseaplot2(egmt, geneSetID = c("HALLMARK_INTERFERON_ALPHA_RESPONSE",
                                  "F_TBRS"), 
              base_size = 12,pvalue_table = F,
-             color = rev(c("#853021","#7DB0AB")))
+             color = c("#853021","#7DB0AB"))
 
 p
+
 
 
 
